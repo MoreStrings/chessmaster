@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+SQLAlchemy
+pydantic
+python-jose
+passlib
+bcrypt
+pandas
+starlette
