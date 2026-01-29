@@ -61,7 +61,7 @@ python -c "from database import init_db; init_db()"
 6. Start the backend server:
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Backend will be available at:
