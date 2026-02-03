@@ -5,7 +5,8 @@ import EvaluationBoard from "@/components/EvaluationBoard";
 import { createStockfish, evalFen } from "@/engine/stockfish";
 import { findOpening } from "@chess-openings/eco.json";
 import { API_URL } from "@/lib/Utils";
-import { openings } from "@/lib/openings"
+import { openings } from "@/lib/openings";
+import { FaArrowLeft } from "react-icons/fa";
 
 const Evaluate = () => {
     const [chess, setChess] = useState(() => new Chess());
@@ -264,8 +265,16 @@ const Evaluate = () => {
 
 
   return (
-    <div>
-        <div className="flex flex-col min-h-[calc(100vh-4rem)] items-center justify-center text-white gap-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 relative">
+        {/* Back Button - Fixed Left Side */}
+        <button
+            onClick={() => navigate("/dashboard")}
+            className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 backdrop-blur rounded-lg transition-all duration-200 border border-slate-700 hover:border-slate-600 shadow-lg"
+        >
+            <FaArrowLeft />
+            <span className="font-medium">Back</span>
+        </button>
+        <div className="flex flex-col min-h-[calc(100vh-4rem)] items-center justify-center text-white gap-6 py-8">
             {analysis?.results?.length > 0 && (<EvaluationBoard 
                 fen={fen}
                 moves={moves}

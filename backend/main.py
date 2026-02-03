@@ -9,11 +9,13 @@ import random
 import json
 import auth
 import puzzle
+import game
 from auth import get_current_user
 
 app = FastAPI()
 app.include_router(auth.router)
 app.include_router(puzzle.router)
+app.include_router(game.router)
 init_db()
 
 app.add_middleware(

@@ -50,6 +50,18 @@ class SolvedPuzzleTheme(Base):
     solved_puzzle_id = Column(Integer, ForeignKey("solved_puzzle.id"))
     theme = Column(String)
 
+class Game(Base):
+    __tablename__ = "games"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    opponent_type = Column(String, default="stockfish")
+    player_color = Column(String, nullable=False)
+    result = Column(String, nullable=False)
+    depth = Column(Integer, nullable=True)
+    moves_count = Column(Integer, nullable=True)
+    played_at = Column(DateTime, default=datetime.now(UTC))
+
 
 def init_db():
     Base.metadata.create_all(bind=engine)

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+﻿import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
@@ -128,8 +128,8 @@ const Game = ({playerColor, depth , onGameOver}) => {
         newSquares[move.to] = {
           background:
             chess.get(move.to) && chess.get(move.to)?.color !== chess.get(square)?.color
-              ? "radial-gradient(circle, rgba(0,0,0,.1) 85%, transparent 85%)"
-              : "radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)",
+              ? "radial-gradient(circle, rgba(255,0,0,.5) 85%, transparent 85%)"
+              : "radial-gradient(circle, rgba(0,255,0,.5) 25%, transparent 25%)",
           borderRadius: "50%",
         };
       });
@@ -140,9 +140,12 @@ const Game = ({playerColor, depth , onGameOver}) => {
 
     };
 
-    const onSquareClick = ({square, piece}) => {
-      if (!moveFrom && piece) {
-       const hasMoveOptions = getMoveOptions(square);
+    const onSquareClick = (square) => {
+      // Block clicks when engine is thinking or game is over
+      if (engineBusyRef.current || over) return;
+      
+      if (!moveFrom) {
+        const hasMoveOptions = getMoveOptions(square);
         if (hasMoveOptions) setMoveFrom(square);
         return;
       }
@@ -171,38 +174,41 @@ const Game = ({playerColor, depth , onGameOver}) => {
           to: square,
         });
       } catch {
-        
         const hasMoveOptions = getMoveOptions(square);
         if(hasMoveOptions){
           setMoveFrom(square);
         }
-
         return;
       }
 
       setFen(chess.fen());
       setMoves(chess.history({ verbose: true }));
       setCurrentMove(chess.history({verbose: true}).length - 1);
-      setMoveFrom('');
+      setMoveFrom(null);
       setOptionSquares({});
 
       if (chess.isGameOver()) {
         if (chess.isCheckmate()) {
-            const winner = chess.turn() === "w" ? "black" : "white";
-            setOver(winner === playerColor ? "You Win!" : "You Lose!");
-          }
+          const winner = chess.turn() === "w" ? "black" : "white";
+          setOver(winner === playerColor ? "You Win!" : "You Lose!");
+        }
 
-          if (chess.isDraw()) {
-            setOver("Draw");
-          }
+        if (chess.isDraw()) {
+          setOver("Draw");
+        }
       }
     };
 
     const promote = (piece) => {
-      chess.move({
-        ...promotionMove,
+      if (!promotionMove) return;
+      const move = chess.move({
+        from: promotionMove.from,
+        to: promotionMove.to,
         promotion: piece,
       });
+      
+      if (!move) return;
+      
       setFen(chess.fen());
       setMoves(chess.history({ verbose: true }));
       setCurrentMove(chess.history({verbose: true}).length - 1);
@@ -212,13 +218,13 @@ const Game = ({playerColor, depth , onGameOver}) => {
 
       if (chess.isGameOver()) {
         if (chess.isCheckmate()) {
-            const winner = chess.turn() === "w" ? "black" : "white";
-            setOver(winner === playerColor ? "You Win!" : "You Lose!");
-          }
+          const winner = chess.turn() === "w" ? "black" : "white";
+          setOver(winner === playerColor ? "You Win!" : "You Lose!");
+        }
 
-          if (chess.isDraw()) {
-            setOver("Draw");
-          }
+        if (chess.isDraw()) {
+          setOver("Draw");
+        }
       }
     };
 

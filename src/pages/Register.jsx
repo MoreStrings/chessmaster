@@ -1,98 +1,330 @@
-import {useState} from "react"
-import { useNavigate } from "react-router-dom"
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { API_URL } from "@/lib/Utils";
+import { FaChess, FaEye, FaEyeSlash, FaCheck } from "react-icons/fa";
 
 const Register = () => {
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
-    const navigate = useNavigate();
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    elo: "",
+  });
 
-    const [form, setForm] = useState({
-        username: "",
-        email: "",
-        password: "",
-        elo: "",
-    });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
+  };
 
-    const handleChange = (e) =>{
-        setForm({...form, [e.target.name]: e.target.value});
-    };
+  const validateForm = () => {
+    const newErrors = {};
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    if (!form.username.trim()) {
+      newErrors.username = "Username is required";
+    } else if (form.username.length < 3) {
+      newErrors.username = "Username must be at least 3 characters";
+    }
 
-        if(!form.elo){
-            alert("Please select your level!");
-            return;
-        }
+    if (!form.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = "Please enter a valid email";
+    }
 
-        try{
-            const res = await fetch(`${API_URL}/auth/`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(form)
-            });
+    if (!form.password) {
+      newErrors.password = "Password is required";
+    } else if (form.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
 
-            if(!res.ok){
-                const errorData = await res.json();
-                alert(errorData.detail || "Failed to create user.");
-                return;
-            }
+    if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
 
-            alert("User created succesfully!");
-            navigate("/login");
-        } catch (err){
-            console.error(err);
-            alert("Something went wrong!");
-        }
+    if (!form.elo) {
+      newErrors.elo = "Please select your skill level";
+    }
 
-    };
+    return newErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const newErrors = validateForm();
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/auth/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: form.username,
+          email: form.email,
+          password: form.password,
+          elo: form.elo,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        setErrors({
+          submit:
+            errorData.detail || "Failed to create account. Please try again.",
+        });
+        return;
+      }
+
+      navigate("/login");
+    } catch (err) {
+      console.error(err);
+      setErrors({
+        submit: "Something went wrong. Please try again later.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const eloLevels = [
+    { value: "800", label: "Beginner", description: "Just starting out" },
+    {
+      value: "1500",
+      label: "Intermediate",
+      description: "Some experience",
+    },
+    {
+      value: "2000",
+      label: "Advanced",
+      description: "Experienced player",
+    },
+  ];
 
   return (
-    <div className="flex justify-center items-center  min-h-[calc(100vh-4rem)] text-white">
-        <form onSubmit={handleSubmit} className=" bg-[#303030] p-3 rounded-xl flex flex-col gap-4 w-full max-w-lg">
-            <h2 className="text-2xl font-bold mb-2">Create Account</h2>
-            <label htmlFor="username">Username:</label>
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-[#1a1a1a] to-[#2d2d2d] text-white px-4 py-8">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <FaChess className="text-blue-400" size={40} />
+            <h1 className="text-3xl font-bold text-transparent bg-gradient-to-r from-yellow-400 to-blue-400 bg-clip-text">
+              ChessMaster
+            </h1>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Create Account</h2>
+          <p className="text-gray-400">
+            Join thousands of chess players. It only takes a minute.
+          </p>
+        </div>
+
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="bg-[#303030] p-8 rounded-xl shadow-2xl space-y-5"
+        >
+          {/* Error Message */}
+          {errors.submit && (
+            <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded-lg text-sm">
+              {errors.submit}
+            </div>
+          )}
+
+          {/* Username Field */}
+          <div>
+            <label htmlFor="username" className="block text-sm font-semibold mb-2">
+              Username
+            </label>
             <input
-                type="text"
-                name="username"
-                placeholder="example_123"
-                required
-                value={form.username}
-                onChange={handleChange}
-                className="p-2 bg-[#414141] rounded-xl"
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Choose a username"
+              value={form.username}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 bg-[#414141] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition ${
+                errors.username ? "ring-2 ring-red-500" : ""
+              }`}
             />
-            <label htmlFor="email">Email:</label>
+            {errors.username && (
+              <p className="text-red-400 text-sm mt-1">{errors.username}</p>
+            )}
+            <p className="text-gray-500 text-xs mt-1">3+ characters</p>
+          </div>
+
+          {/* Email Field */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-semibold mb-2">
+              Email Address
+            </label>
             <input
-                type="email"
-                name="email"
-                placeholder="example@mail.com"
-                required
-                value={form.email}
-                onChange={handleChange}
-                className="p-2 bg-[#414141] rounded-xl"
+              type="email"
+              id="email"
+              name="email"
+              placeholder="your@email.com"
+              value={form.email}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 bg-[#414141] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition ${
+                errors.email ? "ring-2 ring-red-500" : ""
+              }`}
             />
-            <label htmlFor="password">Password:</label>
-            <input
-                type="password"
+            {errors.email && (
+              <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Password Field */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-semibold mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
                 name="password"
-                placeholder=""
-                required
+                placeholder="Create a strong password"
                 value={form.password}
                 onChange={handleChange}
-                className="p-2 bg-[#414141] rounded-xl"
-            />
-            <div className="flex flex-col">
-                <label className="font-semibold">Select your level:</label>
-                <div className="flex gap-3 flex-wrap">
-                    <div><input type="radio" id="elo1" name="elo" value="800" checked={form.elo === "800"} onChange={handleChange}/> <label htmlFor="elo1">Beginner(800)</label></div>
-                    <div><input type="radio" id="elo2" name="elo" value="1500" checked={form.elo === "1500"} onChange={handleChange}/> <label htmlFor="elo2">Intermediate(1500)</label></div>
-                    <div><input type="radio" id="elo3" name="elo" value="2000" checked={form.elo === "2000"} onChange={handleChange}/> <label htmlFor="elo3">Advanced(2000)</label></div>
-                </div>
+                className={`w-full px-4 py-3 bg-[#414141] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition ${
+                  errors.password ? "ring-2 ring-red-500" : ""
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-white transition"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
-            <button type="Submit" className="p-2 bg-green-800">Register</button>
-        </form>
-    </div>
-  )
-}
+            {errors.password && (
+              <p className="text-red-400 text-sm mt-1">{errors.password}</p>
+            )}
+            <p className="text-gray-500 text-xs mt-1">Min. 6 characters</p>
+          </div>
 
-export default Register
+          {/* Confirm Password Field */}
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-semibold mb-2"
+            >
+              Confirm Password
+            </label>
+            <input
+              type={showPassword ? "text" : "password"}
+              id="confirmPassword"
+              name="confirmPassword"
+              placeholder="Confirm your password"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 bg-[#414141] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition ${
+                errors.confirmPassword ? "ring-2 ring-red-500" : ""
+              }`}
+            />
+            {errors.confirmPassword && (
+              <p className="text-red-400 text-sm mt-1">
+                {errors.confirmPassword}
+              </p>
+            )}
+          </div>
+
+          {/* Skill Level Selection */}
+          <div>
+            <label className="block text-sm font-semibold mb-3">
+              What's your chess skill level?
+            </label>
+            <div className="space-y-2">
+              {eloLevels.map((level) => (
+                <label
+                  key={level.value}
+                  className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition ${
+                    form.elo === level.value
+                      ? "border-blue-400 bg-blue-400 bg-opacity-10"
+                      : "border-gray-600 hover:border-gray-500"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="elo"
+                    value={level.value}
+                    checked={form.elo === level.value}
+                    onChange={handleChange}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                  <div className="ml-3 flex-1">
+                    <p className="font-semibold text-sm">{level.label}</p>
+                    <p className="text-gray-400 text-xs">{level.description}</p>
+                  </div>
+                  {form.elo === level.value && (
+                    <FaCheck className="text-blue-400" />
+                  )}
+                </label>
+              ))}
+            </div>
+            {errors.elo && (
+              <p className="text-red-400 text-sm mt-2">{errors.elo}</p>
+            )}
+          </div>
+
+          {/* Terms & Conditions */}
+          <div className="flex gap-2 text-sm text-gray-400">
+            <input type="checkbox" id="terms" className="w-4 h-4 cursor-pointer" />
+            <label htmlFor="terms" className="cursor-pointer">
+              I agree to the{" "}
+              <a href="#" className="text-blue-400 hover:text-blue-300">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="#" className="text-blue-400 hover:text-blue-300">
+                Privacy Policy
+              </a>
+            </label>
+          </div>
+
+          {/* Register Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-bold rounded-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Creating Account..." : "Create Account"}
+          </button>
+
+          {/* Login Link */}
+          <p className="text-center text-gray-400 text-sm">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-blue-400 font-semibold hover:text-blue-300 transition"
+            >
+              Log in here
+            </Link>
+          </p>
+        </form>
+
+        {/* Footer */}
+        <div className="text-center mt-8 text-gray-500 text-sm">
+          <p>Your data is secure and encrypted</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Register;

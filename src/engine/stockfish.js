@@ -1,8 +1,28 @@
 export function createStockfish() {
-  const engine = new Worker("/stockfish/stockfish-17.1-lite-single-03e3232.js");
-  engine.postMessage("uci");
-  engine.postMessage("isready");
-  return engine;
+  return new Promise((resolve, reject) => {
+    try {
+      const engine = new Worker("/stockfish/stockfish-17.1-lite-single-03e3232.js");
+      
+      const initHandler = (e) => {
+        if (e.data === "readyok") {
+          engine.removeEventListener("message", initHandler);
+          resolve(engine);
+        }
+      };
+      
+      engine.addEventListener("message", initHandler);
+      engine.addEventListener("error", (e) => {
+        console.error("Stockfish worker error:", e);
+        reject(e);
+      });
+      
+      engine.postMessage("uci");
+      engine.postMessage("isready");
+    } catch (error) {
+      console.error("Failed to create Stockfish worker:", error);
+      reject(error);
+    }
+  });
 }
 
 export function evalFen(engine, fen, timeMs = 500) {
