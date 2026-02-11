@@ -18,6 +18,13 @@ class User(Base):
     puzzle_rating = Column(Integer, default=1000)
     created_at = Column(DateTime, default=datetime.now(UTC))
 
+ 
+    total_puzzles = Column(Integer, default=0)
+    solved_puzzles = Column(Integer, default=0)
+    total_ai_games = Column(Integer, default=0)
+    ai_games_won = Column(Integer, default=0)
+
+
 
 class Puzzle(Base):
     __tablename__ = "puzzles"

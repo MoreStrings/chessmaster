@@ -111,8 +111,12 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 @router.get("/me")
 async def get_me(db: db_dependency, user: dict = Depends(get_current_user)):
     user = db.query(User).filter(User.id == user["id"]).first()
-    return{
+    return {
         "user_id": user.id,
         "username": user.username,
         "elo": user.puzzle_rating,
+        "total_puzzles": user.total_puzzles,
+        "solved_puzzles": user.solved_puzzles,
+        "total_ai_games": user.total_ai_games,
+        "ai_games_won": user.ai_games_won,
     }

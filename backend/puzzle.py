@@ -109,6 +109,7 @@ def solve_puzzle(db: db_dependency, solve_request: SolveRequest):
         delta_rating += 16
 
     try:
+        # Record the solved puzzle
         db.add(create_solved_puzzle)
         db.flush()
         
@@ -117,7 +118,16 @@ def solve_puzzle(db: db_dependency, solve_request: SolveRequest):
         for theme in puzzle.ThemeList:
             db.add(SolvedPuzzleTheme(solved_puzzle_id = create_solved_puzzle.id, theme = theme))
 
+        # Update puzzle rating
         user.puzzle_rating += delta_rating
+
+        # --- NEW: Update puzzle stats ---
+        user.total_puzzles += 1
+        # Count as solved only if no mistakes and no hints
+        if not solve_request.mistakes_made and not solve_request.hints_used:
+            user.solved_puzzles += 1
+        # --------------------------------
+
         db.add(user)
         db.commit()
         db.refresh(user)

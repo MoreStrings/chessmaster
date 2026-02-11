@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
+from ai import router as ai_router
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Annotated
@@ -14,6 +15,7 @@ from auth import get_current_user
 app = FastAPI()
 app.include_router(auth.router)
 app.include_router(puzzle.router)
+app.include_router(ai_router)
 init_db()
 
 app.add_middleware(
