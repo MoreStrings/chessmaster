@@ -11,14 +11,14 @@ const PuzzleCard = ({user, setUser}) => {
     const [optionSquares, setOptionSquares] = useState({});
     const [promotionMove, setPromotionMove] = useState(null);
 
-    const[time, setTime] = useState(0);
-    const[running, setRunning] = useState(true);
+    const [time, setTime] = useState(0);
+    const [running, setRunning] = useState(true);
 
     const [puzzleInfo, setPuzzleInfo] = useState({
       id:"",
       rating: 0,
     });
-    const[session, setSession] = useState({
+    const [session, setSession] = useState({
       totalPuzzles: 0,
       solvedClean: 0,
       madeMistake: false,
@@ -29,27 +29,25 @@ const PuzzleCard = ({user, setUser}) => {
     const [playerColor, setPlayerColor] = useState("w");
 
     const [arrow, setArrow] = useState([]);
+    const hasFetched = useRef(false);
 
     const fetchPuzzle = async ()=> {
-
       const res = await fetch(`${API_URL}/puzzle/next`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({user_id: user.user_id})
       });
       const puzzle = await res.json();
-      // console.log(puzzle);
 
       chess.load(puzzle.FEN);
-
       const puzzleMoves = puzzle.Moves.split(" ");
-
       const firstMove = puzzleMoves.shift();
+
       if(firstMove){
         chess.move({
           from: firstMove.slice(0, 2),
           to: firstMove.slice(2, 4)
-        })
+        });
       }
 
       setFen(chess.fen());
@@ -59,10 +57,13 @@ const PuzzleCard = ({user, setUser}) => {
       setTime(0);
       setRunning(true);
       setPlayerColor(chess.turn());
+      setArrow([]);
+
       setPuzzleInfo({
         id: puzzle.PuzzleId, 
         rating: puzzle.Rating,
       });
+
       setSession(prev => ({
         ...prev,
         totalPuzzles: prev.totalPuzzles + 1,
@@ -72,7 +73,6 @@ const PuzzleCard = ({user, setUser}) => {
     };
 
     const submitResult = async () => {
-      
       const res = await fetch(`${API_URL}/puzzle/solve`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -86,13 +86,10 @@ const PuzzleCard = ({user, setUser}) => {
       });
 
       const data = await res.json();
-
       if(setUser && data.new_rating){
-        setUser(prev => ({... prev, elo:data.new_rating}));
+        setUser(prev => ({...prev, elo:data.new_rating}));
       }
-
     };
-    const hasFetched = useRef(false);
 
     useEffect(() => {
       if (!hasFetched.current) {
@@ -101,12 +98,9 @@ const PuzzleCard = ({user, setUser}) => {
       }
     }, []);
 
-    useEffect(() => 
-    {
+    useEffect(() => {
       if(!running) return;
-      const interval = setInterval(()=> {
-        setTime(prev => prev+1);
-      }, 1000);
+      const interval = setInterval(()=> setTime(prev => prev+1), 1000);
       return () => clearInterval(interval);
     }, [running]);
 
@@ -117,26 +111,19 @@ const PuzzleCard = ({user, setUser}) => {
       const from = nextMove.slice(0, 2);
       const to = nextMove.slice(2, 4);
 
-      // console.log(from, to);
-
-      if(from && to){
-        setArrow([{startSquare: from, endSquare: to, color:"green"}]);
-        setSession(prev => ({...prev, usedHint: true}));
-      }
+      setArrow([{startSquare: from, endSquare: to, color:"green"}]);
+      setSession(prev => ({...prev, usedHint: true}));
     };
 
-    const isPromotion = (from , to) =>{
-        const moves = chess.moves({square: from, verbose: true});
-        return moves.some(m => m.to === to && m.promotion);
+    const isPromotion = (from , to) => {
+      const moves = chess.moves({square: from, verbose: true});
+      return moves.some(m => m.to === to && m.promotion);
     };
 
     const handleMove = (from, to, promotion = null) => {
+      if (isPromotion(from, to)) return false;
+      if(from === to) return false;
 
-      if (isPromotion(from, to)) {
-        return false;
-      }
-
-      if(from == to) return false;
       const move = chess.move({from, to, promotion});
       if(!move) return false;
 
@@ -144,7 +131,7 @@ const PuzzleCard = ({user, setUser}) => {
         chess.undo();
         setFen(chess.fen());
         setSession(prev => ({...prev, madeMistake:true}));
-        setOver("Wrong Move!");
+        setOver("❌ Wrong move — try again!");
         return false;
       }
 
@@ -160,8 +147,9 @@ const PuzzleCard = ({user, setUser}) => {
           });
           setFen(chess.fen());
           setStep(nextStep + 1);
+
           if (nextStep + 1 >= solution.length){
-            setOver("Puzzle Solved!");
+            setOver("✅ Puzzle Solved!");
             setRunning(false);
             submitResult();
             if(!session.madeMistake && !session.usedHint){
@@ -170,7 +158,7 @@ const PuzzleCard = ({user, setUser}) => {
           }
         }, 400);
       } else if (nextStep >= solution.length) {
-        setOver("Puzzle Solved!");
+        setOver("✅ Puzzle Solved!");
         setRunning(false);
         submitResult();
         if(!session.madeMistake && !session.usedHint){
@@ -179,141 +167,16 @@ const PuzzleCard = ({user, setUser}) => {
       }
 
       setArrow([]);
-
       return true;
     };
 
-    const onPieceDrop = ({sourceSquare, targetSquare, piece}) => {
-      // console.log(sourceSquare, targetSquare, piece);
+    const onPieceDrop = ({sourceSquare, targetSquare}) => {
       if (isPromotion(sourceSquare, targetSquare)) {
         setPromotionMove({ from: sourceSquare, to: targetSquare });
         return false;
       }
       return handleMove(sourceSquare, targetSquare);
     };
-
-    const getMoveOptions = (square) =>{
-      const moves = chess.moves({
-        square, verbose: true
-      });
-      // console.log(square);
-      if(moves.length === 0){
-        setOptionSquares({});
-        return false;
-      }
-
-      const newSquares = {};
-      moves.forEach(move => {
-        newSquares[move.to] = {
-          background:
-            chess.get(move.to) && chess.get(move.to)?.color !== chess.get(square)?.color
-              ? "radial-gradient(circle, rgba(0,0,0,.1) 85%, transparent 85%)"
-              : "radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)",
-          borderRadius: "50%",
-        };
-      });
-
-      newSquares[square] = { background: "rgba(255, 255, 0, 0.4)" };
-      setOptionSquares(newSquares);
-      return true;
-
-    };
-
-    const onSquareClick = ({square, piece}) => {
-      
-      if (moveFrom === square) {
-        setMoveFrom(null);
-        setOptionSquares({});
-        return;
-      }
-
-      if (!moveFrom && piece) {
-       const hasMoveOptions = getMoveOptions(square);
-        if (hasMoveOptions) setMoveFrom(square);
-        return;
-      }
-
-      const moves = chess.moves({
-        square: moveFrom,
-        verbose: true
-      });
-      const foundMove = moves.find(m => m.from === moveFrom && m.to === square);
-
-      if(!foundMove){
-        const hasMoveOptions = getMoveOptions(square);
-        setMoveFrom(hasMoveOptions? square: "");
-        return;
-      }
-
-      try{
-        if (isPromotion(moveFrom, square)) {
-            setPromotionMove({ from: moveFrom, to: square });
-            setMoveFrom(null);
-            setOptionSquares({});
-            return;
-        }
-        handleMove(moveFrom, square);
-      } catch {  
-        const hasMoveOptions = getMoveOptions(square);
-        if(hasMoveOptions){
-          setMoveFrom(square);
-        }
-        return;
-      }
-
-      setMoveFrom("");
-      setOptionSquares({});
-
-    };
-
-    const promote = (piece) =>{
-        const playedMove = promotionMove.from + promotionMove.to + piece;
-        if (playedMove !== solution[step]) {
-          setSession(prev => ({ ...prev, madeMistake: true }));
-          setOver("Wrong Move!");
-          setPromotionMove(null);
-          return;
-        }
-        chess.move({...promotionMove, promotion: piece});
-        setFen(chess.fen());
-        setPromotionMove(null);
-        setMoveFrom("");
-        setOptionSquares({});
-
-        const nextStep = step + 1;
-        setStep(nextStep);
-
-        if (solution[nextStep]) {
-          setTimeout(() => {
-            const replyFrom = solution[nextStep].slice(0, 2);
-            const replyTo = solution[nextStep].slice(2, 4);
-
-            chess.move({ from: replyFrom, to: replyTo });
-            setLastMove({ from: replyFrom, to: replyTo });
-            setFen(chess.fen());
-            setStep(nextStep + 1);
-
-            // check if puzzle is done
-            if (nextStep + 1 >= solution.length) {
-              setOver("Puzzle Solved!");
-              setRunning(false);
-              submitResult();
-              if (!session.madeMistake && !session.usedHint) {
-                setSession(prev => ({ ...prev, solvedClean: prev.solvedClean + 1 }));
-              }
-            }
-          }, 400);
-        } else if (nextStep >= solution.length) {
-          setOver("Puzzle Solved!");
-          setRunning(false);
-          submitResult();
-          if (!session.madeMistake && !session.usedHint) {
-            setSession(prev => ({ ...prev, solvedClean: prev.solvedClean + 1 }));
-          }
-        }
-    };
-
-    const promotionColor = chess.turn() === "w" ? "w" : "b";
 
     const formatTime = (seconds) => {
       const m = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -322,58 +185,118 @@ const PuzzleCard = ({user, setUser}) => {
     };
 
   return (
-    <div>
-        <div className="flex flex-wrap">
-            <div className = "max-w-xl relative border-2 border-[#c0c0c0]">
-                <Chessboard options={{position: fen, onPieceDrop, onSquareClick, squareStyles: optionSquares, boardOrientation: (playerColor === "w"? "white": "black"), arrows: arrow}}/>
-                {promotionMove && (
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 bg-black/80 p-2 rounded-lg">
+    <div className="flex flex-wrap gap-4">
 
-                    {["q", "r", "b", "n"].map(p => {
-                        const piece = promotionColor + p.toUpperCase();
+      {/* Chess Board */}
+      <div className="max-w-xl relative border-2 border-[#c0c0c0] shadow-xl rounded-lg overflow-hidden">
+        <Chessboard
+          options={{
+            position: fen,
+            onPieceDrop,
+            boardOrientation: playerColor === "w" ? "white" : "black",
+            arrows: arrow,
+            squareStyles: optionSquares,
+          }}
+        />
 
-                        return(
-                            <div className="cursor-pointer p-1.5 rounded-1.5 bg-[#333]" key={piece} >
-                                <img
-                                    src={PROMOTION_IMAGES[piece]}
-                                    alt={piece}
-                                    width={45}
-                                    onClick={() => promote(p)}
-                                />
-                            </div>
-                        )
-                    })}            
+        {promotionMove && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 bg-black/80 p-2 rounded-lg">
+            {["q","r","b","n"].map(p => {
+              const piece = promotionColor + p.toUpperCase();
+              return (
+                <img
+                  key={piece}
+                  src={PROMOTION_IMAGES[piece]}
+                  className="w-11 cursor-pointer hover:scale-110 transition"
+                  onClick={() => promote(p)}
+                />
+              )
+            })}
+          </div>
+        )}
+      </div>
+      <div className="bg-[#303030] text-white flex flex-col justify-center items-center p-4 border-2 border-[#c0c0c0] rounded-lg min-w-[260px]">
 
-                    </div>
-                )}
+      <div className="text-xl font-bold tracking-wide text-yellow-400">
+        {user.username}
+      </div>
 
-            </div>
-            <div className="bg-[#303030] text-white flex flex-col justify-center items-center p-4 border-2 border-[#c0c0c0] basis-full md:basis-auto">
-              <div className="font-semibold mb-3">{user.username}({user.elo})</div>
-              <div className="text-lg font-semibold">Puzzle Info</div>
-              <div>{chess.turn() === "w"? "White to move": "Black to move"}</div>
-              <div>Puzzle ID: {puzzleInfo.id}</div>
-              <div>Rating: {puzzleInfo.rating}</div>
-              <div className="m-2">Time: {formatTime(time)}</div>
-              {over && <div className="mt-2 text-red-400">{over}</div>}
-              <div>Solved this Session: {session.solvedClean} / {session.totalPuzzles}</div>
-              <button
-                className="mt-4 bg-green-600 px-4 py-2 rounded-lg hover:bg-green-500"
-                onClick={showHint}
-              >
-                Hint
-              </button>
-              <button
-                onClick={fetchPuzzle}
-                className="mt-4 bg-green-600 px-4 py-2 rounded-lg hover:bg-green-500"
-              >
-                Next Puzzle
-              </button>
-            </div>
+      <div className="text-sm text-gray-300 mb-1">
+        Rating: <span className="font-semibold text-white">{user.elo}</span>
+      </div>
+
+      <div className="mt-1 px-3 py-1  bg-black/40 text-white-400 font-mono tracking-widest">
+        ⏱ {formatTime(time)}
+      </div>
+
+      <div className={`mt-3 px-4 py-1  text-sm font-semibold tracking-wide 
+      ${chess.turn() === "w"
+        ? "bg-white text-black"
+        : "bg-black text-white border border-white"}`}
+>
+        {chess.turn() === "w" ? "♔ White to move" : "♚ Black to move"}
+      </div>
+
+
+      {/* Side Panel */}
+      
+      
+
+        <div className="mt-2 text-sm">Puzzle ID: {puzzleInfo.id}</div>
+        <div className="text-sm">Rating: {puzzleInfo.rating}</div>
+
+        {/* Progress Bar */}
+        <div className="w-full mt-3">
+          <div className="text-xs text-gray-300 mb-1">Progress</div>
+          <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-green-500 h-full transition-all duration-300"
+              style={{ width: `${(step / solution.length) * 100 || 0}%` }}
+            />
+          </div>
         </div>
 
+        {/* Session Bar */}
+        <div className="w-full mt-3">
+          <div className="text-xs text-gray-300 mb-1">Session Accuracy</div>
+          <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-blue-500 h-full transition-all duration-300"
+              style={{
+                width: session.totalPuzzles === 0
+                  ? 0
+                  : (session.solvedClean / session.totalPuzzles) * 100
+              }}
+            />
+          </div>
+          <div className="text-xs mt-1 text-gray-400">
+            {session.solvedClean} / {session.totalPuzzles}
+          </div>
+        </div>
+
+        {over && (
+          <div className="mt-3 px-3 py-1 bg-black/40 rounded-lg animate-pulse">
+            {over}
+          </div>
+        )}
+
+        <button
+          className="mt-4 bg-green-600 px-4 py-2 rounded-lg hover:bg-green-500 animate-pulse"
+          onClick={showHint}
+        >
+          Hint
+        </button>
+
+        <button
+          onClick={fetchPuzzle}
+          className="mt-3 bg-green-600 px-4 py-2 rounded-lg hover:bg-green-500"
+        >
+          Next Puzzle
+        </button>
+
+      </div>
     </div>
   )
 }
 
-export default PuzzleCard
+export default PuzzleCard;
