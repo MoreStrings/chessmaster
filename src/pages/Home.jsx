@@ -1,58 +1,117 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
+const chessFacts = [
+  "The longest chess game theoretically possible is 5,949 moves.",
+  "The number of possible chess games is greater than the number of atoms in the observable universe.",
+  "The word 'checkmate' comes from Persian — 'Shah Mat' meaning 'the king is helpless'.",
+  "The first chess-playing machine was built in 1770.",
+  "On average, a chess game lasts 40 moves.",
+  "The highest recorded chess rating is 2882, achieved by Magnus Carlsen in 2014.",
+];
 
 const Home = () => {
   const navigate = useNavigate();
+  const [factIndex, setFactIndex] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) navigate("/dashboard");
+  }, [navigate]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFactIndex((prev) => (prev + 1) % chessFacts.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#111111] via-[#1c1c1c] to-[#0f172a] text-white">
-      <div className="flex min-h-screen items-center justify-center px-6">
-        <div className="text-center max-w-3xl">
+    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#ecfeff] text-slate-800 relative overflow-hidden">
 
-          {/* Hero Title */}
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
-            Elevate Your <span className="text-indigo-500">Chess Skills</span>
-          </h1>
+      {/* Floating Background Graphic */}
+      <div className="absolute right-[-120px] top-[-80px] w-[420px] h-[420px] rounded-full bg-gradient-to-br from-emerald-200 to-cyan-200 blur-3xl opacity-50" />
+      <div className="absolute left-[-120px] bottom-[-120px] w-[420px] h-[420px] rounded-full bg-gradient-to-br from-indigo-200 to-emerald-200 blur-3xl opacity-40" />
 
-          {/* Subtitle */}
-          <p className="text-lg md:text-xl text-gray-300 mb-8">
-            Train with tactical puzzles, challenge our intelligent AI engine,
-            improve your ELO rating, and track your progress like a professional.
-          </p>
+      {/* Navbar */}
+      <nav className="relative z-10 flex justify-between items-center px-10 py-6">
+        <div className="text-xl font-bold tracking-wide">
+          ♟ Chess Trainer
+        </div>
 
-          {/* Feature Highlights */}
-          <div className="grid md:grid-cols-3 gap-6 mb-10 text-sm md:text-base">
-            <div className="bg-[#1f1f1f] p-4 rounded-xl shadow-md hover:scale-105 transition">
-              ♟ Solve Daily Puzzles
+        <div className="flex gap-4">
+          <Link
+            to="/login"
+            className="px-4 py-2 rounded-lg text-sm font-medium border border-emerald-400 text-emerald-700 hover:bg-emerald-50 transition"
+          >
+            Login
+          </Link>
+
+          <Link
+            to="/register"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition shadow-md"
+          >
+            Register
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <div className="relative z-10 flex min-h-[calc(100vh-6rem)] items-center justify-center px-6">
+        <div className="grid lg:grid-cols-2 gap-16 max-w-6xl w-full items-center">
+
+          {/* Left Content */}
+          <div>
+            <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+              Train Smarter.
+              <br />
+              <span className="text-emerald-600">Play Better.</span>
+              <br />
+              Win More.
+            </h1>
+
+            <p className="text-lg text-slate-600 mb-8 max-w-xl">
+              A minimalist chess training platform designed for serious learners.
+              Improve tactical vision, challenge AI, analyze progress, and master the board.
+            </p>
+
+            <div className="flex gap-4">
+              <Link
+                to="/register"
+                className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-semibold shadow-lg hover:bg-emerald-600 transition"
+              >
+                Start Training
+              </Link>
+
+              <Link
+                to="/login"
+                className="px-6 py-3 border border-emerald-500 text-emerald-700 rounded-xl font-semibold hover:bg-emerald-50 transition"
+              >
+                I have an account
+              </Link>
             </div>
-            <div className="bg-[#1f1f1f] p-4 rounded-xl shadow-md hover:scale-105 transition">
-              🤖 Play Against AI
-            </div>
-            <div className="bg-[#1f1f1f] p-4 rounded-xl shadow-md hover:scale-105 transition">
-              📊 Track Your ELO Progress
+
+            {/* Rotating Chess Facts */}
+            <div className="mt-10 bg-white/70 backdrop-blur-md border border-emerald-200 rounded-xl px-6 py-4 shadow-sm">
+              <div className="text-xs uppercase tracking-widest text-emerald-600 mb-1">
+                Did you know?
+              </div>
+              <p className="text-slate-700 font-medium transition-all duration-500">
+                {chessFacts[factIndex]}
+              </p>
             </div>
           </div>
 
-          {/* Buttons (UNCHANGED LOGIC) */}
-          <div className="flex gap-4 justify-center">
-            <Link
-              className="mt-3 bg-green-600 px-6 py-2 rounded-lg hover:bg-green-500 transition text-lg font-semibold shadow-md"
-              to="/login"
-            >
-              Login
-            </Link>
+          {/* Right Visual */}
+          <div className="relative hidden lg:flex justify-center">
+            <img
+              src="\src\assets\board.png"
+              alt="Chess board"
+              className="w-[460px] rounded-3xl shadow-2xl border border-white/50"
+            />
 
-            <Link
-              className="mt-3 bg-indigo-600 px-6 py-2 rounded-lg hover:bg-indigo-500 transition text-lg font-semibold shadow-md"
-              to="/register"
-            >
-              Register
-            </Link>
+            
           </div>
 
         </div>
