@@ -25,3 +25,7 @@ dist-ssr
 
 .env
 *.onetoc2
+
+# Python compiled files
+*.pyc
+__pycache__/
