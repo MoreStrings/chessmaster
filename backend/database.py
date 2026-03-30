@@ -58,5 +58,28 @@ class SolvedPuzzleTheme(Base):
     theme = Column(String)
 
 
+class PuzzleAttempt(Base):
+    __tablename__ = "puzzle_attempt"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    puzzle_id = Column(String, ForeignKey("puzzles.PuzzleId"))
+    started_at = Column(DateTime, default=datetime.now(UTC))
+    finished_at = Column(DateTime, nullable=True)
+
+    solved = Column(Boolean, default=False)
+    solve_time_seconds = Column(Integer, nullable=True)
+    hint_used = Column(Boolean, default=False)
+    mistakes_made = Column(Boolean, default=False)
+
+
+class PuzzleAttemptTheme(Base):
+    __tablename__ = "puzzle_attempt_theme"
+
+    id = Column(Integer, primary_key=True)
+    attempt_id = Column(Integer, ForeignKey("puzzle_attempt.id"))
+    theme = Column(String)
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)

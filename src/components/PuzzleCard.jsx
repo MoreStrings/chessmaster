@@ -31,7 +31,31 @@ const PuzzleCard = ({user, setUser}) => {
     const [arrow, setArrow] = useState([]);
     const hasFetched = useRef(false);
 
+    const [attemptId, setAttemptId] = useState(null);
+    const [puzzleSolved, setPuzzleSolved] = useState(false);
+
+    const skipAttempt = async (id) => {
+      const token = localStorage.getItem("token");
+      if (!token || !id) return;
+      try {
+        await fetch(`${API_URL}/puzzle/skip`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ attempt_id: id }),
+        });
+      } catch (e) {
+        // best-effort
+      }
+    };
+
     const fetchPuzzle = async ()=> {
+      if (attemptId && !puzzleSolved) {
+        await skipAttempt(attemptId);
+      }
+
       const res = await fetch(`${API_URL}/puzzle/next`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -56,6 +80,8 @@ const PuzzleCard = ({user, setUser}) => {
       setOver("");
       setTime(0);
       setRunning(true);
+      setPuzzleSolved(false);
+      setAttemptId(puzzle.attemptId);
       setPlayerColor(chess.turn());
       setArrow([]);
 
@@ -79,6 +105,7 @@ const PuzzleCard = ({user, setUser}) => {
         body: JSON.stringify({
           user_id: user.user_id,
           puzzle_id: puzzleInfo.id,
+          attempt_id: attemptId,
           solve_time_seconds: time,
           hints_used: session.usedHint,
           mistakes_made: session.madeMistake,
@@ -97,6 +124,14 @@ const PuzzleCard = ({user, setUser}) => {
         fetchPuzzle();
       }
     }, []);
+
+    useEffect(() => {
+      return () => {
+        if (attemptId && !puzzleSolved) {
+          skipAttempt(attemptId);
+        }
+      };
+    }, [attemptId, puzzleSolved]);
 
     useEffect(() => {
       if(!running) return;
@@ -151,6 +186,7 @@ const PuzzleCard = ({user, setUser}) => {
           if (nextStep + 1 >= solution.length){
             setOver("✅ Puzzle Solved!");
             setRunning(false);
+            setPuzzleSolved(true);
             submitResult();
             if(!session.madeMistake && !session.usedHint){
               setSession(prev => ({ ...prev, solvedClean: prev.solvedClean + 1}));
@@ -160,6 +196,7 @@ const PuzzleCard = ({user, setUser}) => {
       } else if (nextStep >= solution.length) {
         setOver("✅ Puzzle Solved!");
         setRunning(false);
+        setPuzzleSolved(true);
         submitResult();
         if(!session.madeMistake && !session.usedHint){
           setSession(prev => ({ ...prev, solvedClean: prev.solvedClean + 1}));

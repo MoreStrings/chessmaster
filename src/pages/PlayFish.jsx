@@ -66,7 +66,7 @@ const PlayFish = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f3f8f5] text-[#1f2933]">
+      <div className="mixed-app-bg min-h-screen flex items-center justify-center text-[#1f2933]">
         Loading...
       </div>
     );
@@ -78,7 +78,7 @@ const PlayFish = () => {
       : 0;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-[#f3f8f5] to-[#e9f3ef] flex flex-col items-center justify-center gap-10 px-4">
+    <div className="mixed-app-bg min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-10 px-4">
 
       {/* Stats */}
       {user && !playing && (
@@ -201,7 +201,7 @@ const PlayFish = () => {
 
           {gameId > 0 && (
             <div className="mt-4 text-center text-sm text-[#6fbf9c]">
-              Game finished — start a new practice 🌱
+              Game finished — start a new practice 
             </div>
           )}
         </div>

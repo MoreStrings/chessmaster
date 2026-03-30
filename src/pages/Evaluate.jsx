@@ -259,26 +259,37 @@ const Evaluate = () => {
     }, [isAnalyzing]);
 
     if(loading){
-        return <div className="text-white text-center mt-20">Loading...</div>;
+        return (
+            <div className="mixed-app-bg min-h-[calc(100vh-4rem)] flex items-center justify-center text-slate-800">
+                Loading...
+            </div>
+        );
     }
 
 
   return (
-    <div>
-        <div className="flex flex-col min-h-[calc(100vh-4rem)] items-center justify-center text-white gap-6">
-            {analysis?.results?.length > 0 && (<EvaluationBoard 
-                fen={fen}
-                moves={moves}
-                analysis = {analysis}
-            />)}
-            {isAnalyzing && <div className="text-2xl">
-                <div className="animate-pulse">Stockfish is Analyzing the game....</div> 
-                <div>ETA: {eta}s </div>
+    <div className="mixed-app-bg">
+        <div className="flex flex-col min-h-[calc(100vh-4rem)] items-center justify-center text-slate-800 gap-6">
+            {analysis?.results?.length > 0 && (
+                <div className="text-white">
+                    <EvaluationBoard 
+                        fen={fen}
+                        moves={moves}
+                        analysis = {analysis}
+                    />
                 </div>
-            }
+            )}
+
+            {isAnalyzing && (
+                <div className="text-2xl">
+                    <div className="animate-pulse">Stockfish is Analyzing the game....</div> 
+                    <div>ETA: {eta}s </div>
+                </div>
+            )}
+
             <div className="w-full max-w-lg px-4">
                 <form className="flex flex-col gap-3" onSubmit={handlePgnSubmit}>
-                    <label>Paste PGN of game to be evaluated</label>
+                    <label className="text-slate-700">Paste PGN of game to be evaluated</label>
                     <textarea
                         name="pgn"
                         value={pgn}
@@ -286,7 +297,7 @@ const Evaluate = () => {
                         onChange={(e) => setPgn(e.target.value)}
                         placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 ..."
                         onFocus={() => setShowSubmit(true)}
-                        className="p-2 bg-[#404040] w-full border-2 border-[#c0c0c0] focus:outline-none focus:border-white"
+                        className="p-2 bg-[#404040] text-white w-full border-2 border-[#c0c0c0] focus:outline-none focus:border-white"
                     />
                     {showSubmit && (
                         <button
