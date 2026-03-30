@@ -5,8 +5,6 @@ import { Trophy, Puzzle, Bot } from "lucide-react";
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -53,7 +51,7 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f6f7f8] text-gray-700">
+      <div className="min-h-screen flex items-center justify-center bg-[#0f1a12] text-gray-200">
         <p className="text-lg animate-pulse">Loading dashboard...</p>
       </div>
     );
@@ -71,10 +69,6 @@ const Dashboard = () => {
       ? ((user.ai_games_won / user.total_ai_games) * 100).toFixed(1)
       : 0;
 
-  const combinedAccuracy = (
-    (Number(puzzleAccuracy) + Number(aiAccuracy)) / 2
-  ).toFixed(1);
-
   const elo = user.elo || 1200;
 
   const rank =
@@ -86,134 +80,98 @@ const Dashboard = () => {
       ? "Advanced"
       : "Master";
 
-  const performanceData = [
-    { name: "Puzzles", value: user.solved_puzzles },
-    { name: "AI Wins", value: user.ai_games_won },
+  // Chart data
+  const puzzleChartData = [
+    { name: "Solved", value: user.solved_puzzles },
+    { name: "Remaining", value: user.total_puzzles - user.solved_puzzles },
   ];
 
-  const trendData = [
-    { day: "Mon", score: elo - 80 },
-    { day: "Tue", score: elo - 50 },
-    { day: "Wed", score: elo - 30 },
-    { day: "Thu", score: elo - 10 },
-    { day: "Fri", score: elo },
+  const aiChartData = [
+    { name: "Wins", value: user.ai_games_won },
+    { name: "Losses", value: user.total_ai_games - user.ai_games_won },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f7f8f9] to-[#eceff1] p-8 text-gray-800">
-
+    <div className="min-h-screen p-6 bg-gradient-to-br from-[#e8f1f0] to-[#d6e4e3] text-gray-800">
       {/* Header */}
-      <div className="mb-10">
+      <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-wide">
-          Welcome back,
-          <span className="text-[#4f8a8b] ml-2">{user.username}</span>
+          Welcome back, <span className="text-[#4f8a8b]">{user.username}</span>
         </h1>
-        <p className="text-gray-500 mt-1">
-          Your learning and practice overview
-        </p>
+        <p className="text-gray-600 mt-1">Track your chess progress and performance</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      {/* Horizontal split */}
+      <div className="flex gap-6">
 
-        {/* Puzzle */}
-        <div className="bg-[#fafafa] border border-gray-200  p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-[#4f8a8b] mb-2">
-            <Puzzle size={18} />
-            <span className="text-sm font-medium">Puzzles</span>
+        {/* Left: Stats - bigger width */}
+        <div className="flex-[0.6] flex flex-col gap-6">
+          <div className="bg-white/90 p-6 rounded-2xl shadow flex flex-col gap-4">
+            <h2 className="text-2xl font-semibold mb-4">Your Stats</h2>
+
+            <div className="flex justify-between items-center">
+              <span>Puzzles Solved:</span>
+              <span className="font-semibold">{user.solved_puzzles} / {user.total_puzzles}</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span>AI Wins:</span>
+              <span className="font-semibold">{user.ai_games_won} / {user.total_ai_games}</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span>ELO Rating:</span>
+              <span className="font-semibold">{elo} ({rank})</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span>Puzzle Accuracy:</span>
+              <span className="font-semibold">{puzzleAccuracy}%</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span>AI Win Rate:</span>
+              <span className="font-semibold">{aiAccuracy}%</span>
+            </div>
           </div>
 
-          <div className="text-2xl font-semibold">{puzzleAccuracy}%</div>
-          <p className="text-xs text-gray-500">
-            {user.solved_puzzles} solved of {user.total_puzzles}
-          </p>
-
-          <div className="mt-3 h-2 bg-gray-200  overflow-hidden">
-            <div
-              className="h-full bg-[#4f8a8b]"
-              style={{ width: `${puzzleAccuracy}%` }}
-            />
-          </div>
-        </div>
-
-        {/* AI */}
-        <div className="bg-[#fafafa] border border-gray-200  p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-[#6aa84f] mb-2">
-            <Bot size={18} />
-            <span className="text-sm font-medium">AI Games</span>
-          </div>
-
-          <div className="text-2xl font-semibold">{aiAccuracy}%</div>
-          <p className="text-xs text-gray-500">
-            {user.ai_games_won} wins of {user.total_ai_games}
-          </p>
-
-          <div className="mt-3 h-2 bg-gray-200  overflow-hidden">
-            <div
-              className="h-full bg-[#6aa84f]"
-              style={{ width: `${aiAccuracy}%` }}
-            />
+          {/* Extra motivational card */}
+          <div className="bg-white/90 p-4 rounded-2xl shadow text-center text-gray-700 font-medium">
+            Keep practicing daily to improve your puzzles and AI performance!
           </div>
         </div>
 
-        {/* Elo */}
-        <div className="bg-[#fafafa] border border-gray-200  p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Rating</p>
-          <p className="text-3xl font-semibold text-[#d4a017]">{elo}</p>
-          <p className="text-xs text-gray-500 mt-1">{rank}</p>
-        </div>
-
-        {/* Combined */}
-        <div className="bg-gradient-to-br from-[#d4a017] to-[#e6b800] p-5 shadow-sm text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy size={18} />
-            <span className="text-sm font-medium">Overall</span>
+        {/* Right: Charts - smaller width */}
+        <div className="flex-[0.4] flex flex-col gap-6">
+          <div className="bg-white/80 p-4 rounded-xl shadow">
+            <h3 className="font-semibold mb-2 text-gray-700 flex items-center gap-2">
+              <Puzzle size={18} /> Puzzle Games
+            </h3>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={puzzleChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#4f8a8b" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
-          <div className="text-3xl font-semibold">{combinedAccuracy}%</div>
-          <p className="text-xs opacity-90">Combined accuracy</p>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-8">
-
-        <div className="bg-[#fafafa] border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h3 className="font-semibold mb-4 text-gray-700">
-            Practice Distribution
-          </h3>
-
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#4f8a8b" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="bg-[#fafafa] border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h3 className="font-semibold mb-4 text-gray-700">
-            Rating Trend
-          </h3>
-
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="day" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke="#6aa84f"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="bg-white/80 p-4 rounded-xl shadow">
+            <h3 className="font-semibold mb-2 text-gray-700 flex items-center gap-2">
+              <Bot size={18} /> AI Games
+            </h3>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={aiChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#6aa84f" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
       </div>
