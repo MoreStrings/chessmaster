@@ -9,3 +9,5 @@ pandas
 starlette
 argon2_cffi
 python-multipart
+python-dotenv
+psycopg2-binary

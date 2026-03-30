@@ -1,11 +1,21 @@
 from sqlalchemy import Column, String, Integer, JSON, DateTime, Boolean, ForeignKey, UniqueConstraint, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime, UTC
+import os
+from dotenv import load_dotenv
 
-DATABASE_URL = "sqlite:///./puzzles.db"
+load_dotenv()
+
+USER = os.getenv("user")
+PASSWORD = os.getenv("password")
+HOST = os.getenv("host")
+PORT = os.getenv("port")
+DBNAME = os.getenv("dbname")
+
+DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
 
 Base = declarative_base()
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 class User(Base):
