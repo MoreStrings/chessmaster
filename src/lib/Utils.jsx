@@ -1,7 +1,9 @@
 const hostname = window.location.hostname;
 const isOtherDevice = hostname !== "localhost" && hostname !== "127.0.0.1";
 
-export const API_URL = isOtherDevice? `http://${hostname}:8000` : "http://localhost:8000";
+// export const API_URL = isOtherDevice? `http://${hostname}:8000` : "http://localhost:8000";
+
+export const API_URL = import.meta.env.VITE_API_URL;
 
 import wQ from "../assets/wQ.png";
 import wR from "../assets/wR.png";
