@@ -44,13 +44,17 @@ const Puzzle = () => {
     }, [navigate]);
 
     if(loading){
-        return <div className="text-white text-center mt-20">Loading...</div>;
+        return (
+            <div className="mixed-app-bg min-h-[calc(100vh-4rem)] flex items-center justify-center text-slate-800">
+                Loading...
+            </div>
+        );
     }
 
 
   return (
-    <div className="">
-        <div className="flex items-center  min-h-[calc(100vh-4rem)] justify-center">
+    <div className="mixed-app-bg">
+        <div className="flex items-center min-h-[calc(100vh-4rem)] justify-center">
             <PuzzleCard user={user} setUser={setUser}/>
         </div>
     </div>

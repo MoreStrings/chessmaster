@@ -3,3 +3,7 @@
 body{
     background-color: #202020 ;
 }
+
+.mixed-app-bg{
+    background: linear-gradient(135deg, #f8fafc 0%, #dce8de 35%, #c8e1c3 60%, #ecfeff 100%);
+}
