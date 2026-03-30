@@ -18,6 +18,16 @@ import {
   Scatter,
 } from "recharts";
 
+const useWindowWidth = () => {
+  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return width;
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -28,6 +38,9 @@ const Dashboard = () => {
   const [hintMistakeSummary, setHintMistakeSummary] = useState(null);
   const [solveTimeVsRating, setSolveTimeVsRating] = useState([]);
   const [solveTimeVsRatingLoading, setSolveTimeVsRatingLoading] = useState(true);
+
+  const windowWidth = useWindowWidth();
+  const isMobile = windowWidth < 640;
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -96,7 +109,10 @@ const Dashboard = () => {
                 solveTimeSeconds: Number(p.solveTimeSeconds),
               }))
               .filter(
-                (p) => Number.isFinite(p.rating) && Number.isFinite(p.solveTimeSeconds) && p.solveTimeSeconds >= 0
+                (p) =>
+                  Number.isFinite(p.rating) &&
+                  Number.isFinite(p.solveTimeSeconds) &&
+                  p.solveTimeSeconds >= 0
               )
           );
         } else {
@@ -155,7 +171,6 @@ const Dashboard = () => {
       ? "Advanced"
       : "Master";
 
-  // Chart data
   const puzzleChartData = [
     { name: "Solved", value: user.solved_puzzles },
     { name: "Unsolved", value: user.total_puzzles - user.solved_puzzles },
@@ -196,14 +211,16 @@ const Dashboard = () => {
   });
 
   const themeStackedData = themePerformance.map((t) => ({
-    themeLabel: `${t.theme} (${t.solvePercent}%)`,
+    themeLabel: isMobile ? t.theme : `${t.theme} (${t.solvePercent}%)`,
     playedCount: t.playedCount,
     solvedCount: t.solvedCount,
     unsolvedCount: t.unsolvedCount,
     solvePercent: t.solvePercent,
   }));
 
-  const themeChartHeight = Math.max(260, themeStackedData.length * 32);
+  const themeChartHeight = Math.max(260, themeStackedData.length * (isMobile ? 44 : 32));
+  const yAxisWidth = isMobile ? 90 : 160;
+  const chartMarginLeft = isMobile ? 0 : 90;
 
   const statCards = [
     { label: "Puzzles Solved", value: `${user.solved_puzzles} / ${user.total_puzzles}` },
@@ -231,7 +248,6 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-semibold text-gray-800">Your Stats</h2>
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map((s) => (
             <div
@@ -290,52 +306,59 @@ const Dashboard = () => {
                 <div className="h-65">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                    <Pie
-                      data={donutData.length > 0 ? donutData : [{ name: "No data", value: 1 }]}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={70}
-                      outerRadius={105}
-                      paddingAngle={4}
-                      cornerRadius={6}
-                      labelLine={false}
-                      label={false}
-                    >
-                      {(donutData.length > 0 ? donutData : [{ name: "No data", value: 1 }]).map(
-                        (entry, index) => (
-                          <Cell
-                            key={`cell-${entry.name}-${index}`}
-                            fill={donutData.length > 0 ? donutColors[index % donutColors.length] : "var(--color-gray-300)"}
-                          />
-                        )
-                      )}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value, name) => {
-                        const v = Number(value) || 0;
-                        const pct = donutTotal > 0 ? (v / donutTotal) * 100 : 0;
-                        const pctLabel = Number.isFinite(pct) ? `${pct.toFixed(1)}%` : "0.0%";
-                        return [`${v} (${pctLabel})`, name];
-                      }}
-                      contentStyle={{ borderRadius: 12 }}
-                    />
-                    <text
-                      x="50%"
-                      y="50%"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="fill-gray-800"
-                      style={{ fontSize: 14, fontWeight: 600 }}
-                    >
-                      {hintMistakeSummary.totalSolved}
-                    </text>
+                      <Pie
+                        data={donutData.length > 0 ? donutData : [{ name: "No data", value: 1 }]}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={70}
+                        outerRadius={105}
+                        paddingAngle={4}
+                        cornerRadius={6}
+                        labelLine={false}
+                        label={false}
+                      >
+                        {(donutData.length > 0 ? donutData : [{ name: "No data", value: 1 }]).map(
+                          (entry, index) => (
+                            <Cell
+                              key={`cell-${entry.name}-${index}`}
+                              fill={
+                                donutData.length > 0
+                                  ? donutColors[index % donutColors.length]
+                                  : "var(--color-gray-300)"
+                              }
+                            />
+                          )
+                        )}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value, name) => {
+                          const v = Number(value) || 0;
+                          const pct = donutTotal > 0 ? (v / donutTotal) * 100 : 0;
+                          const pctLabel = Number.isFinite(pct) ? `${pct.toFixed(1)}%` : "0.0%";
+                          return [`${v} (${pctLabel})`, name];
+                        }}
+                        contentStyle={{ borderRadius: 12 }}
+                      />
+                      <text
+                        x="50%"
+                        y="50%"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="fill-gray-800"
+                        style={{ fontSize: 14, fontWeight: 600 }}
+                      >
+                        {hintMistakeSummary.totalSolved}
+                      </text>
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
 
                 <div className="mt-3 grid grid-cols-1 gap-2">
                   {donutLegend.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between text-sm text-gray-700">
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between text-sm text-gray-700"
+                    >
                       <div className="flex items-center gap-2">
                         <span
                           className="inline-block h-3 w-3 rounded-sm"
@@ -345,7 +368,8 @@ const Dashboard = () => {
                         <span className="font-medium">{item.name}</span>
                       </div>
                       <div className="tabular-nums text-gray-800">
-                        {item.value} <span className="text-gray-500">({item.pct.toFixed(1)}%)</span>
+                        {item.value}{" "}
+                        <span className="text-gray-500">({item.pct.toFixed(1)}%)</span>
                       </div>
                     </div>
                   ))}
@@ -354,7 +378,9 @@ const Dashboard = () => {
 
               <div className="w-full md:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-200 p-4 shadow-sm">
-                  <div className="text-xs uppercase tracking-wider text-gray-500">Total puzzles solved</div>
+                  <div className="text-xs uppercase tracking-wider text-gray-500">
+                    Total puzzles solved
+                  </div>
                   <div className="mt-1 text-2xl font-semibold text-gray-900">
                     {hintMistakeSummary.totalSolved}
                   </div>
@@ -366,13 +392,17 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-200 p-4 shadow-sm">
-                  <div className="text-xs uppercase tracking-wider text-gray-500">Mistakes made</div>
+                  <div className="text-xs uppercase tracking-wider text-gray-500">
+                    Mistakes made
+                  </div>
                   <div className="mt-1 text-2xl font-semibold text-gray-900">
                     {hintMistakeSummary.mistakesMade}
                   </div>
                 </div>
                 <div className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-200 p-4 shadow-sm">
-                  <div className="text-xs uppercase tracking-wider text-gray-500">Solved cleanly</div>
+                  <div className="text-xs uppercase tracking-wider text-gray-500">
+                    Solved cleanly
+                  </div>
                   <div className="mt-1 text-2xl font-semibold text-gray-900">
                     {hintMistakeSummary.solvedCleanly}
                   </div>
@@ -402,14 +432,24 @@ const Dashboard = () => {
                   name="Rating"
                   allowDecimals={false}
                   domain={[500, "dataMax"]}
-                  label={{ value: "Puzzle rating", position: "insideBottom", offset: -10 }}
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  label={
+                    isMobile
+                      ? undefined
+                      : { value: "Puzzle rating", position: "insideBottom", offset: -10 }
+                  }
                 />
                 <YAxis
                   type="number"
                   dataKey="solveTimeSeconds"
                   name="Solve time"
                   allowDecimals={false}
-                  label={{ value: "Solve time (seconds)", angle: -90, position: "insideLeft" }}
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  label={
+                    isMobile
+                      ? undefined
+                      : { value: "Solve time (seconds)", angle: -90, position: "insideLeft" }
+                  }
                 />
                 <Tooltip
                   cursor={{ strokeDasharray: "3 3" }}
@@ -421,7 +461,9 @@ const Dashboard = () => {
                       <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
                         <div className="text-sm font-semibold text-gray-800 mb-1">Puzzle</div>
                         <div className="text-xs text-gray-700">Rating: {p.rating}</div>
-                        <div className="text-xs text-gray-700">Solve time: {formatSeconds(p.solveTimeSeconds)}</div>
+                        <div className="text-xs text-gray-700">
+                          Solve time: {formatSeconds(p.solveTimeSeconds)}
+                        </div>
                       </div>
                     );
                   }}
@@ -440,21 +482,33 @@ const Dashboard = () => {
           {themePerformanceLoading ? (
             <div className="text-sm text-gray-600">Loading theme performance...</div>
           ) : themeStackedData.length === 0 ? (
-            <div className="text-sm text-gray-600">Play some puzzles to see theme performance.</div>
+            <div className="text-sm text-gray-600">
+              Play some puzzles to see theme performance.
+            </div>
           ) : (
             <ResponsiveContainer width="100%" height={themeChartHeight}>
               <BarChart
                 data={themeStackedData}
                 layout="vertical"
-                margin={{ left: 90, right: 20, top: 10, bottom: 30 }}
+                margin={{ left: chartMarginLeft, right: 20, top: 10, bottom: 30 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                 <XAxis
                   type="number"
                   allowDecimals={false}
-                  label={{ value: "Total games played", position: "insideBottom", offset: -10 }}
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  label={
+                    isMobile
+                      ? undefined
+                      : { value: "Total games played", position: "insideBottom", offset: -10 }
+                  }
                 />
-                <YAxis type="category" dataKey="themeLabel" width={160} />
+                <YAxis
+                  type="category"
+                  dataKey="themeLabel"
+                  width={yAxisWidth}
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                />
                 <Legend verticalAlign="top" align="center" />
                 <Tooltip
                   content={({ active, payload, label }) => {
@@ -472,8 +526,18 @@ const Dashboard = () => {
                     );
                   }}
                 />
-                <Bar dataKey="solvedCount" name="Solved" stackId="a" fill="var(--color-blue-700)" />
-                <Bar dataKey="unsolvedCount" name="Unsolved" stackId="a" fill="var(--color-gray-400)" />
+                <Bar
+                  dataKey="solvedCount"
+                  name="Solved"
+                  stackId="a"
+                  fill="var(--color-blue-700)"
+                />
+                <Bar
+                  dataKey="unsolvedCount"
+                  name="Unsolved"
+                  stackId="a"
+                  fill="var(--color-gray-400)"
+                />
               </BarChart>
             </ResponsiveContainer>
           )}

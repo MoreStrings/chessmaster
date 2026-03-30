@@ -1,25 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
   const token = localStorage.getItem("token");
 
-  // If no token, don't show navbar
-  if (!token) {
-    return null;
-  }
+  if (!token) return null;
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
 
+  const links = [
+    { to: "/puzzle", label: "Puzzles" },
+    { to: "/evaluate", label: "Evaluate" },
+    { to: "/play", label: "Play" },
+  ];
+
   return (
     <div className="inset-x-0 bg-[#303030] shadow-md">
-      <div className="max-w-7xl mx-auto text-white">
-        <div className="flex justify-between items-center h-16 px-5">
-          
+      <div className="max-w-7xl mx-auto text-white px-5">
+        <div className="flex justify-between items-center h-16">
           <Link
             className="text-2xl font-extrabold hover:text-blue-400 transition"
             to="/dashboard"
@@ -27,19 +30,13 @@ const Navbar = () => {
             Dashboard
           </Link>
 
-          <div className="text-lg font-semibold flex items-center gap-6">
-            <Link to="/puzzle" className="hover:text-blue-400 transition">
-              Puzzles
-            </Link>
-
-            <Link to="/evaluate" className="hover:text-blue-400 transition">
-              Evaluate
-            </Link>
-
-            <Link to="/play" className="hover:text-blue-400 transition">
-              Play
-            </Link>
-
+          {/* Desktop nav */}
+          <div className="hidden sm:flex text-lg font-semibold items-center gap-6">
+            {links.map(({ to, label }) => (
+              <Link key={to} to={to} className="hover:text-blue-400 transition">
+                {label}
+              </Link>
+            ))}
             <button
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 px-4 py-1 rounded-lg transition"
@@ -47,8 +44,41 @@ const Navbar = () => {
               Logout
             </button>
           </div>
+
+          {/* Hamburger button */}
+          <button
+            className="sm:hidden flex flex-col justify-center items-center gap-1.5 w-8 h-8"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label="Toggle menu"
+          >
+            <span className={`block h-0.5 w-6 bg-white transition-transform duration-200 ${menuOpen ? "rotate-45 translate-y-2" : ""}`} />
+            <span className={`block h-0.5 w-6 bg-white transition-opacity duration-200 ${menuOpen ? "opacity-0" : ""}`} />
+            <span className={`block h-0.5 w-6 bg-white transition-transform duration-200 ${menuOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+          </button>
         </div>
       </div>
+
+      {/* Mobile dropdown */}
+      {menuOpen && (
+        <div className="sm:hidden bg-[#262626] px-5 pb-4 flex flex-col gap-3 text-white font-semibold">
+          {links.map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className="hover:text-blue-400 transition py-1"
+              onClick={() => setMenuOpen(false)}
+            >
+              {label}
+            </Link>
+          ))}
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition text-left w-fit"
+          >
+            Logout
+          </button>
+        </div>
+      )}
     </div>
   );
 };
